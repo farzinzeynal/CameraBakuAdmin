@@ -16,7 +16,7 @@ public class ItemDto
     public String price;
 
     @SerializedName("photo")
-    public byte[] photo;
+    public String photo;
 
     @SerializedName("item_type")
     public String item_type;
@@ -33,7 +33,7 @@ public class ItemDto
     public ItemDto() {
     }
 
-    public ItemDto(String id, String title, String price, byte[] photo, String item_type, String rating, String created_date, Boolean active) {
+    public ItemDto(String id, String title, String price, String photo, String item_type, String rating, String created_date, Boolean active) {
         this.id = id;
         this.title = title;
         this.price = price;
@@ -68,11 +68,11 @@ public class ItemDto
         this.price = price;
     }
 
-    public byte[] getPhoto() {
+    public String getPhoto() {
         return photo;
     }
 
-    public void setPhoto(byte[] photo) {
+    public void setPhoto(String photo) {
         this.photo = photo;
     }
 

@@ -9,10 +9,10 @@ public class ItemRequest
     public String title;
 
     @SerializedName("price")
-    public String price;
+    public Long price;
 
     @SerializedName("photo")
-    public byte[] photo;
+    public String photo;
 
     @SerializedName("item_type")
     public String item_type;
@@ -26,7 +26,7 @@ public class ItemRequest
     public ItemRequest() {
     }
 
-    public ItemRequest(String title, String price, byte[] photo, String item_type, Float rating, String created_date) {
+    public ItemRequest(String title, Long price, String photo, String item_type, Float rating, String created_date) {
         this.title = title;
         this.price = price;
         this.photo = photo;
@@ -43,19 +43,19 @@ public class ItemRequest
         this.title = title;
     }
 
-    public String getPrice() {
+    public Long getPrice() {
         return price;
     }
 
-    public void setPrice(String price) {
+    public void setPrice(Long price) {
         this.price = price;
     }
 
-    public byte[] getPhoto() {
+    public String getPhoto() {
         return photo;
     }
 
-    public void setPhoto(byte[] photo) {
+    public void setPhoto(String photo) {
         this.photo = photo;
     }
 

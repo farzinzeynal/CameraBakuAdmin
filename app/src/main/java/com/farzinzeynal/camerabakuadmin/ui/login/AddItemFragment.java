@@ -13,10 +13,13 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
+import android.util.Base64;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,10 +37,13 @@ import com.farzinzeynal.camerabakuadmin.ui.retrofit.model.dto.ItemDto;
 import com.farzinzeynal.camerabakuadmin.ui.util.Contants;
 import com.farzinzeynal.camerabakuadmin.ui.util.DateUtils;
 import com.google.android.material.textfield.TextInputEditText;
+import com.theartofdev.edmodo.cropper.CropImage;
+import com.theartofdev.edmodo.cropper.CropImageView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -46,6 +52,8 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+
+import static android.app.Activity.RESULT_OK;
 
 
 public class AddItemFragment extends Fragment {
@@ -61,7 +69,6 @@ public class AddItemFragment extends Fragment {
     private String item_type;
 
     private final static  int REQUEST_CODE_GALLERY = 999;
-    private Uri uri;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -126,13 +133,14 @@ public class AddItemFragment extends Fragment {
 
 
                 ItemRequest itemRequest = new ItemRequest();
-                itemRequest.setPhoto(imageViewTobyte(imageView_item));
+                itemRequest.setPhoto(imageViewToString(imageView_item));
                 itemRequest.setTitle(et_item_name.getText().toString());
-                itemRequest.setPrice(et_item_price.getText().toString());
+                itemRequest.setPrice(Long.parseLong(et_item_price.getText().toString()));
                 itemRequest.setItem_type(item_type);
                 itemRequest.setRating(4.5F);
                 itemRequest.setCreated_date(formattedDate);
                 Call<ItemDto> call = itemApi.createItem(itemRequest);
+
 
                 progressBar_add_item.setVisibility(View.VISIBLE);
 
@@ -149,7 +157,7 @@ public class AddItemFragment extends Fragment {
                             et_item_description.setText("");
                             et_item_price.setText("");
                             add_button.setEnabled(false);
-                            imageView_item.setImageResource(R.drawable.empty_image);
+                            imageView_item.setImageResource(R.drawable.add_image);
 
                         }
                            else {
@@ -163,7 +171,7 @@ public class AddItemFragment extends Fragment {
                     @Override
                     public void onFailure(Call<ItemDto> call, Throwable t) {
                         progressBar_add_item.setVisibility(View.GONE);
-                        Log.i("onFailureItemAdd", "FAIL: "+t.toString());
+                        Log.i("onResponseItemAdd", "FAIL: "+t.toString());
                         Toast.makeText(getActivity(), "Bilinməyən XƏTA", Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -177,35 +185,61 @@ public class AddItemFragment extends Fragment {
         return root;
     }
 
-    //convert Image to byte[]
-    private byte[] imageViewTobyte(ImageView imageView_add_adver)
+
+    private byte[] imageViewTobyte(ImageView imageView)
     {
-        Bitmap bitmap = ((BitmapDrawable)imageView_add_adver.getDrawable()).getBitmap();
+        Bitmap bitmap = ((BitmapDrawable)imageView.getDrawable()).getBitmap();
         ByteArrayOutputStream stream  = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG,100,stream);
         byte[] byteArray = stream.toByteArray();
         return byteArray;
     }
 
+    private String imageViewToString(ImageView imageView)
+    {
+        Bitmap bitmap = ((BitmapDrawable)imageView.getDrawable()).getBitmap();
+        ByteArrayOutputStream stream  = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG,100,stream);
+        byte[] byteArray = stream.toByteArray();
+        String encodedImage = Base64.encodeToString(byteArray, Base64.DEFAULT);
+        return encodedImage;
+    }
+
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data)
     {
-        //result for galery intent
-        if(requestCode == REQUEST_CODE_GALLERY && resultCode == Activity.RESULT_OK && data != null)
+        super.onActivityResult(requestCode, resultCode, data);
+        if(resultCode==RESULT_OK)
         {
-            uri = data.getData();
-            try {
-                InputStream inputStream = getActivity().getContentResolver().openInputStream(uri);
-                Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-                imageView_item.setImageBitmap(bitmap);
-                add_button.setEnabled(true);
-
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
+            if(requestCode==REQUEST_CODE_GALLERY)
+            {
+                CropImage.activity(data.getData())
+                        .setGuidelines(CropImageView.Guidelines.ON)
+                        .start(getContext(),this);
             }
         }
-        super.onActivityResult(requestCode, resultCode, data);
+
+        if(requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE){
+            CropImage.ActivityResult result = CropImage.getActivityResult(data);
+            if(resultCode == RESULT_OK){
+                Uri resultUri = result.getUri();
+                imageView_item.setImageURI(resultUri);
+                Log.i("imageUri", "OK");
+                add_button.setEnabled(true);
+
+            }
+
+            else if(resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE)
+            {
+                Exception error = result.getError();
+                Toast.makeText(getActivity(), " "+error, Toast.LENGTH_SHORT).show();
+            }
+        }
+
+
+
+
 
     }
 
@@ -230,6 +264,9 @@ public class AddItemFragment extends Fragment {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
     }
+
+
+
 
 
 }
